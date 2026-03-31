@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Virtual environment
+venv/
+
+# Vector database
+chroma_store/
+
+# Uploaded files
+uploads/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files
+test_*.py
+
+# VS Code
+.vscode/
