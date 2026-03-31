@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_classic.chains import RetrievalQA
+from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from rag.ingest import get_embeddings, CHROMA_PATH
 
@@ -47,8 +47,7 @@ def ask_question(question: str, collection_name: str = "default") -> str:
     llm = ChatGoogleGenerativeAI(
         model=GEMINI_MODEL,
         google_api_key=api_key,
-        temperature=0,
-        convert_system_message_to_human=True,
+        temperature=0
     )
 
     qa_chain = RetrievalQA.from_chain_type(
