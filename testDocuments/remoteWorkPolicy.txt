@@ -1,0 +1,26 @@
+Remote Work Policy — TechCorp India
+Last Updated: January 2025
+
+1. Overview
+TechCorp India introduced a hybrid remote work policy in 2023. All full-time employees are eligible to work remotely up to 3 days per week. The remaining 2 days must be spent at the designated office location. Contractual and part-time employees require manager approval before working remotely.
+
+2. Eligibility
+Employees must have completed a minimum of 6 months at TechCorp before applying for remote work privileges. Employees on a performance improvement plan (PIP) are not eligible for remote work until the plan is successfully closed. New joiners are required to work from the office full-time for their first 90 days.
+
+3. Equipment and Internet
+TechCorp provides each remote employee with a laptop, a monitor, and a headset. Employees are responsible for maintaining a stable internet connection with a minimum speed of 20 Mbps. TechCorp reimburses up to INR 1,000 per month toward internet expenses upon submission of a bill.
+
+4. Working Hours
+Core working hours are 10:00 AM to 4:00 PM IST regardless of work location. Outside these hours, employees have flexibility in structuring their day. All employees must be reachable on Slack during core hours and must acknowledge messages within 30 minutes.
+
+5. Leave and Attendance
+Remote work days are not counted as leave. However, if an employee is unresponsive during core hours without prior notice for more than 2 hours, it will be marked as a half-day leave. Three such occurrences in a month will result in a formal warning.
+
+6. Security
+Employees must use the TechCorp VPN at all times when accessing internal systems remotely. Sharing screens or confidential documents over personal devices or personal email is strictly prohibited. Any security breach must be reported to the IT team within 1 hour of discovery.
+
+7. Policy Violations
+Violations of this policy may result in revocation of remote work privileges, formal warnings, or in severe cases, termination of employment. The HR team reviews all reported violations within 5 working days.
+
+8. Review
+This policy is reviewed every 6 months. Employees are encouraged to submit feedback through the internal HR portal. The next scheduled review is July 2025.

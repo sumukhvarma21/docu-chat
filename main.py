@@ -3,6 +3,8 @@ import shutil
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from rag.ingest import clear_store, ingest_file
@@ -38,13 +40,19 @@ class ChatResponse(BaseModel):
     answer: str
 
 
-@app.post("/upload", response_model=UploadResponse)
-async def upload_document(file: UploadFile, user_id: str):
-    filename = file.filename or "upload"
-    collection_name = f"user_{user_id}_{file.filename}"
+@app.get("/")
+def serve_frontend():
+    return FileResponse("index.html")
 
-    if not (filename.lower().endswith(".pdf") or filename.lower().endswith(".txt")):
-        raise HTTPException(status_code=400, detail="Only .pdf and .txt files supported.")
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+
+@app.post("/upload", response_model=UploadResponse)
+async def upload_document(file: UploadFile = File(...)):
+    filename = file.filename or "upload"
+
+    if not filename.lower().endswith(".txt"):
+        raise HTTPException(status_code=400, detail="Only .txt files supported.")
 
     file_path = os.path.join(UPLOAD_DIR, filename)
 
@@ -52,7 +60,7 @@ async def upload_document(file: UploadFile, user_id: str):
         shutil.copyfileobj(file.file, buffer)
 
     try:
-        chunk_count = ingest_file(file_path, collection_name)
+        chunk_count = ingest_file(file_path)
     except (ValueError, RuntimeError) as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -64,12 +72,12 @@ async def upload_document(file: UploadFile, user_id: str):
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: QuestionRequest,  collection_name: str):
+async def chat(request: QuestionRequest):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
     try:
-        answer = ask_question(request.question, collection_name)
+        answer = ask_question(request.question)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

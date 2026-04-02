@@ -1,12 +1,25 @@
 import os
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+import chromadb
 from langchain_chroma import Chroma
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 
-CHROMA_PATH = "./chroma_store"
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+
+CHROMA_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "chroma_store")
+)
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
+# Single shared client — prevents file lock conflicts
+_chroma_client = None
+
+def get_chroma_client():
+    global _chroma_client
+    if _chroma_client is None:
+        _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+    return _chroma_client
 
 def get_embeddings():
     return HuggingFaceEmbeddings(
@@ -15,19 +28,19 @@ def get_embeddings():
         encode_kwargs={"normalize_embeddings": True},
     )
 
-
-def ingest_file(file_path: str, collection_name: str = "default") -> int:
+def ingest_file(file_path: str) -> int:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    if file_path.lower().endswith(".pdf"):
-        loader = PyPDFLoader(file_path)
-    elif file_path.lower().endswith(".txt"):
+    if file_path.lower().endswith(".txt"):
         loader = TextLoader(file_path, encoding="utf-8")
     else:
-        raise ValueError("Only .pdf and .txt files are supported.")
+        raise ValueError("Only .txt files are supported.")
 
     documents = loader.load()
+
+    if not documents:
+        raise ValueError("Document loaded but contained no text.")
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
@@ -39,15 +52,13 @@ def ingest_file(file_path: str, collection_name: str = "default") -> int:
     Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=CHROMA_PATH,
-        collection_name=collection_name,
+        client=get_chroma_client(),
+        collection_name="default",
     )
-    return len(chunks)
 
     return len(chunks)
-
 
 def clear_store():
-    import shutil
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
+    client = get_chroma_client()
+    for collection in client.list_collections():
+        client.delete_collection(collection.name)

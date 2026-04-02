@@ -1,0 +1,40 @@
+Product Requirements Document — PayFlow v2.1
+Author: Priya Nair, Senior PM
+Date: March 2025
+Status: In Review
+
+1. Background
+PayFlow is TechCorp's internal payment processing platform used by 14 business units across India and Southeast Asia. The current version (v2.0) processes an average of 2.3 million transactions per day with a success rate of 98.6%. PayFlow v2.1 addresses three critical gaps identified in the Q4 2024 audit: lack of UPI AutoPay support, no retry mechanism for failed transactions, and missing real-time fraud scoring.
+
+2. Goals
+The primary goals of PayFlow v2.1 are:
+- Add UPI AutoPay support for recurring payments
+- Implement an automatic retry mechanism with exponential backoff for failed transactions
+- Integrate with the FraudShield API for real-time transaction scoring
+- Reduce failed transaction rate from 1.4% to below 0.8%
+- Maintain p99 latency under 350ms for all payment endpoints
+
+3. Non-Goals
+PayFlow v2.1 will not support international payments, cryptocurrency transactions, or BNPL (Buy Now Pay Later) integrations. These are deferred to v3.0 planned for Q3 2025.
+
+4. UPI AutoPay
+UPI AutoPay allows merchants to debit customers on a scheduled basis without requiring explicit approval for each transaction. Implementation requires integration with the NPCI mandate registration API. The maximum debit limit per transaction is INR 15,000 without additional authentication. Mandates above INR 15,000 require UPI PIN confirmation. Supported frequencies: daily, weekly, monthly, and quarterly.
+
+5. Retry Mechanism
+Failed transactions due to network timeouts or gateway errors will be retried automatically. The retry schedule follows exponential backoff: 30 seconds, 2 minutes, 10 minutes, and 1 hour. A maximum of 4 retry attempts will be made. After all retries are exhausted, the transaction is marked as permanently failed and a webhook is sent to the merchant. Retries will not be attempted for transactions declined due to insufficient funds or fraud flags.
+
+6. Fraud Scoring
+Every transaction above INR 500 will be scored by the FraudShield API before processing. Transactions with a fraud score below 30 are automatically approved. Scores between 30 and 70 trigger a step-up authentication (OTP). Scores above 70 result in automatic rejection and the transaction is flagged for manual review. FraudShield API SLA is 50ms at p95.
+
+7. Success Metrics
+- Failed transaction rate below 0.8% within 30 days of launch
+- UPI AutoPay adoption by at least 5 business units within 60 days
+- Zero P1 incidents related to fraud scoring in the first 90 days
+- p99 payment latency under 350ms maintained throughout
+
+8. Timeline
+- April 2025: Engineering kickoff, FraudShield integration begins
+- May 2025: UPI AutoPay development complete, internal testing
+- June 2025: Retry mechanism complete, load testing
+- July 2025: Staged rollout to 3 business units
+- August 2025: Full rollout to all 14 business units

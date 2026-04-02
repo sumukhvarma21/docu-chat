@@ -1,0 +1,39 @@
+System Design Interview Notes — Distributed Systems
+Compiled by: Sumukh Varma
+Last Updated: March 2025
+
+1. CAP Theorem
+The CAP theorem states that a distributed system can only guarantee two of three properties simultaneously: Consistency, Availability, and Partition Tolerance. In practice, network partitions are unavoidable, so the real choice is between consistency and availability during a partition. CP systems (e.g. HBase, Zookeeper) prioritise consistency — they may become unavailable during a partition to avoid serving stale data. AP systems (e.g. Cassandra, DynamoDB) prioritise availability — they continue serving requests during a partition but may return stale data. CA systems (e.g. traditional RDBMS) assume no partitions, which is only safe in single-node or tightly-coupled setups.
+
+2. Consistent Hashing
+Consistent hashing is used to distribute data across nodes in a way that minimises reshuffling when nodes are added or removed. Each node and each key is mapped to a position on a virtual ring using a hash function. A key is assigned to the first node clockwise from its position on the ring. When a node is added, only the keys between the new node and its predecessor need to be moved. Virtual nodes (vnodes) are used to improve distribution — each physical node is represented by multiple positions on the ring.
+
+3. Rate Limiting Algorithms
+Token Bucket: A bucket holds up to N tokens. Tokens are added at a fixed rate. Each request consumes one token. If the bucket is empty, the request is rejected or queued. Allows bursting up to N requests.
+Leaky Bucket: Requests are added to a queue and processed at a fixed rate. Smooths out bursts but introduces latency.
+Fixed Window Counter: Count requests in a fixed time window (e.g. 100 requests per minute). Simple but vulnerable to boundary bursts — a client can make 100 requests at 11:59 and 100 more at 12:00.
+Sliding Window Log: Store timestamp of each request. Count requests in the last 60 seconds. Accurate but memory-intensive.
+Sliding Window Counter: Hybrid of fixed window and sliding log. Most practical for production use.
+
+4. Database Indexing
+A B-tree index is the default for most relational databases. It supports equality and range queries and works well for high-cardinality columns. A hash index only supports equality queries and is faster for exact lookups. A composite index covers multiple columns — the leftmost prefix rule applies, meaning a composite index on (a, b, c) can serve queries on a, (a, b), or (a, b, c) but not on b alone. Covering indexes include all columns needed for a query so the database never needs to access the actual table rows. Index selectivity matters — an index on a boolean column with 50/50 distribution is often ignored by the query planner.
+
+5. Message Queues
+Message queues decouple producers from consumers. Key properties to discuss in interviews: delivery guarantees (at-most-once, at-least-once, exactly-once), ordering guarantees (global vs partition-level), and consumer group semantics. Kafka uses a log-based approach — messages are retained for a configurable period and consumers track their own offsets. This allows replaying messages and supports multiple independent consumer groups. SQS uses a queue-based approach — messages are deleted after acknowledgement. Visibility timeout prevents duplicate processing. Dead letter queues (DLQ) capture messages that fail repeatedly. RabbitMQ supports complex routing via exchanges — direct, topic, fanout, and headers.
+
+6. Caching Patterns
+Cache-aside (lazy loading): Application checks cache first. On miss, fetches from DB and populates cache. Simple but can cause cache stampede under high load.
+Write-through: Every write goes to cache and DB simultaneously. Cache is always fresh but write latency increases.
+Write-behind (write-back): Writes go to cache immediately, DB is updated asynchronously. Fast writes but risk of data loss if cache crashes before DB sync.
+Read-through: Cache sits in front of DB. On miss, cache fetches from DB automatically. Simplifies application logic.
+Cache eviction policies: LRU (least recently used), LFU (least frequently used), TTL-based expiry.
+
+7. Common Interview Questions and Answers
+Q: How would you design a URL shortener?
+A: Use a hash function (MD5 or base62 encoding of an auto-increment ID) to generate short codes. Store the mapping in a database with the short code as the primary key. Use a cache (Redis) to serve redirects with low latency. Handle collisions by appending a suffix or retrying. For scale, use consistent hashing to shard the database.
+
+Q: How would you design a notification system?
+A: Decouple notification sending from the triggering event using a message queue (Kafka or SQS). Use separate workers for each channel (push, email, SMS). Implement rate limiting per user to avoid notification fatigue. Store notification history in a database for the inbox feature. Use exponential backoff for retries on delivery failures.
+
+Q: What is the difference between horizontal and vertical scaling?
+A: Vertical scaling means adding more resources (CPU, RAM) to a single machine. It has a physical limit and typically requires downtime. Horizontal scaling means adding more machines. It requires the application to be stateless or to handle distributed state. Horizontal scaling is preferred for modern cloud-native systems because it has no hard upper limit and can be automated with auto-scaling groups.
